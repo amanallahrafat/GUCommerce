@@ -53,5 +53,31 @@ CREATE TABLE Delivery_Person
 (
 username varchar(20) PRIMARY KEY,
 is_activated BIT,
-FOREIGN KEY(username) REFERENCES Users,
+FOREIGN KEY(username) REFERENCES Users
+)
+
+CREATE TABLE Credit_Card
+(number varchar(20) PRIMARY KEY,
+expiry_date datetime,
+cvv_code varchar(20))
+
+CREATE TABLE Delivery(
+id INT,
+time_duration INT,
+fees decimal(5,3),
+username varchar(20),
+FOREIGN KEY(username) REFERENCES Admins
+)
+
+--Datatypes have to be discussed in Orders Table
+CREATE TABLE Orders
+(order_no INT PRIMARY KEY,
+order_date datetime,
+total_amount INT, cash_amount decimal(10,2), credit_amount decimal(10,2), payment_type varchar(20), order_status varchar(20), remaining_days INT, time_limit datetime,
+customer_name varchar(20),
+delivery_id INT,
+creditCard_number varchar(20),
+FOREIGN KEY(customer_name) REFERENCES Customer,
+FOREIGN KEY(delivery_id) REFERENCES Delivery,
+FOREIGN KEY(creditCard_number) REFERENCES Credit_Card
 )
