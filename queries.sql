@@ -90,7 +90,7 @@ category varchar(20),
 product_description text,
 final_price decimal(10,2),
 color varchar(20), available BIT, rate INT,
-vendor_username varchar(20), customer_username varchar(20)
+vendor_username varchar(20), customer_username varchar(20),
 FOREIGN KEY(customer_name) REFERENCES Customer,
 FOREIGN KEY(vendor_username) REFERENCES Vendor
 )
