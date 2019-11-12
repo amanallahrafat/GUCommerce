@@ -62,7 +62,7 @@ expiry_date datetime,
 cvv_code varchar(20))
 
 CREATE TABLE Delivery(
-id INT,
+id INT PRIMARY KEY,
 time_duration INT,
 fees decimal(5,3),
 username varchar(20),
@@ -80,4 +80,17 @@ creditCard_number varchar(20),
 FOREIGN KEY(customer_name) REFERENCES Customer,
 FOREIGN KEY(delivery_id) REFERENCES Delivery,
 FOREIGN KEY(creditCard_number) REFERENCES Credit_Card
+)
+
+CREATE TABLE Product
+(
+serial_no INT PRIMARY KEY,
+product_name varchar(20),
+category varchar(20),
+product_description text,
+final_price decimal(10,2),
+color varchar(20), available BIT, rate INT,
+vendor_username varchar(20), customer_username varchar(20)
+FOREIGN KEY(customer_name) REFERENCES Customer,
+FOREIGN KEY(vendor_username) REFERENCES Vendor
 )
