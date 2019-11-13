@@ -77,6 +77,8 @@ total_amount INT, cash_amount decimal(10,2), credit_amount decimal(10,2), paymen
 customer_name varchar(20),
 delivery_id INT,
 creditCard_number varchar(20),
+Gift_Card_code_used varchar(20),
+FOREIGN KEY (Gift_Card_code_used) REFERENCES Giftcard, 
 FOREIGN KEY(customer_name) REFERENCES Customer,
 FOREIGN KEY(delivery_id) REFERENCES Delivery,
 FOREIGN KEY(creditCard_number) REFERENCES Credit_Card
@@ -91,6 +93,8 @@ product_description text,
 final_price decimal(10,2),
 color varchar(20), available BIT, rate INT,
 vendor_username varchar(20), customer_username varchar(20),
+customer_order_id varchar(20),
+FOREIGN KEY(customer_order_id) REFERENCES Orders,
 FOREIGN KEY(customer_name) REFERENCES Customer,
 FOREIGN KEY(vendor_username) REFERENCES Vendor
 )
