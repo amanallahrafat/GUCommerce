@@ -3,7 +3,7 @@
 CREATE TABLE Users
 (
 username varchar(20) PRIMARY KEY,
-password varchar(20),
+password varchar(20) NOT NULL,
 first_name varchar(20),
 last_name varchar(20),
 email varchar(50)
