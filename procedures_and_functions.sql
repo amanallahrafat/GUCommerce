@@ -7,4 +7,5 @@ INSERT INTO Users
 values (@username,@password, @first_name, @last_name, @email);
 INSERT INTO Vendor (username,company_name,bank_acc_no)
 values (@username, @company_name, @bank_acc_no);
-GO;
+
+
