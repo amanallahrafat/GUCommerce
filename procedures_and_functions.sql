@@ -158,3 +158,65 @@ FROM Product P
 WHERE WP.username LIKE @customername AND WP.wish_name LIKE @name
 GO
 
+
+CREATE PROC viewMyCart
+@customer varchar(20)
+AS
+SELECT P.*
+FROM Product P 
+	INNER JOIN  CustomerAddstoCartProduct C ON P.serial_no = C.serial_no
+	WHERE @customer like C.customer_name
+GO
+
+CREATE function viewMyCartF (@customer varchar(20))
+RETURNS TABLE
+AS
+RETURN (SELECT P.*
+FROM Product P 
+	INNER JOIN  CustomerAddstoCartProduct C ON P.serial_no = C.serial_no
+	WHERE @customer like C.customer_name)
+GO
+
+CREATE PROC calculatepriceOrder
+@customername varchar(20),
+@sum  DECIMAL(10,2) OUTPUT
+AS 
+SELECT sum(price)
+FROM viewMyCartF(@customername)
+GO
+
+CREATE PROC productsinorder
+@customername varchar(20),
+@orderID int
+AS
+SELECT *
+FROM viewMyCartF(@customername)
+
+UPDATE Product 
+SET customer_username = @customername , customer_order_id = @orderID  , available = '0'
+WHERE serial_no IN (SELECT serial_no FROM viewMyCartF(@customername))
+
+DELETE FROM CustomerAddstoCartProduct
+WHERE (serial_no IN (SELECT serial_no FROM viewMyCartF(@customername))) AND NOT(customer_name LIKE @customername)
+GO
+
+CREATE PROC emptyCart
+@customername varchar(20)
+AS
+DELETE FROM CustomerAddstoCartProduct
+WHERE customer_name like @customername
+GO
+
+CREATE PROC makeOrder
+@customername varchar(20)
+AS
+DECLARE @total_amount INT
+	
+EXEC calculatepriceOrder @customername , @total_amount output
+INSERT INTO Orders(order_date , total_amount , customer_name,order_status)
+VALUES (CURRENT_TIMESTAMP , @total_amount , @customername, 'not processed')
+
+
+EXEC productsinorder @customername,  
+
+GO

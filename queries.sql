@@ -1,4 +1,5 @@
-﻿Create DataBase GUCommerce
+﻿--Create DataBase GUCommerce
+
 
 CREATE TABLE Users
 (
@@ -73,7 +74,7 @@ FOREIGN KEY(username) REFERENCES Admins
 --Datatypes have to be discussed in Orders Table
 
 CREATE TABLE Orders
-(order_no INT PRIMARY KEY,
+(order_no INT PRIMARY KEY IDENTITY(1,1),
 order_date datetime,
 total_amount INT, cash_amount decimal(10,2), credit_amount decimal(10,2), payment_type varchar(20), order_status varchar(20), remaining_days INT,
 time_limit datetime,
@@ -87,7 +88,29 @@ FOREIGN KEY(delivery_id) REFERENCES Delivery,
 FOREIGN KEY(creditCard_number) REFERENCES Credit_Card
 
 )
-
+--drop table Admin_Customer_Giftcard
+--drop table Product
+--drop table Admin_Delivery_Order
+--drop table Admins
+--drop table Credit_Card
+--drop table	Customer
+--drop table	Customer_CreditCard
+--drop table	Customer_Question_Product
+-- drop table	CustomerAddstoCartProduct
+--drop table	Delivery
+--drop table	Delivery_Person
+--drop table	Giftcard
+-- drop table	offer
+--drop table	offersOnProduct
+--drop table	Orders
+--drop table	Todays_Deals
+-- drop table Todays_Deals_Product
+-- drop table	User_Addresses
+-- drop table	User_mobile_numbers
+--drop table	Users
+--drop table	Vendor
+-- drop table	Wishlist
+--drop table Wishlist_Product
 
 CREATE TABLE Product
 (
@@ -189,7 +212,7 @@ FOREIGN KEY(serial_no) REFERENCES Product
 
 CREATE TABLE Admin_Customer_Giftcard
 (
-code INT ,
+code varchar(10) ,
 customer_name VARCHAR(20),
 admin_username VARCHAR(20),
 remaining_points INT,
