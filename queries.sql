@@ -114,7 +114,7 @@ FOREIGN KEY(creditCard_number) REFERENCES Credit_Card
 
 CREATE TABLE Product
 (
-serial_no INT PRIMARY KEY,
+serial_no INT PRIMARY KEY IDENTITY(1,1),
 product_name varchar(20),
 category varchar(20),
 product_description text,

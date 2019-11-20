@@ -346,4 +346,172 @@ VALUES(@creditcardnumber, @expirydate,@cvv)
 INSERT INTO Customer_CreditCard
 VALUES(@customername,@creditcardnumber)
 GO
+
+CREATE PROC ChooseCreditCard
+@creditcard varchar(20), @orderid int
+AS
+UPDATE Orders
+SET creditCard_number = @creditcard
+WHERE order_no = @orderid
 GO
+
+CREATE PROC vewDeliveryTypes
+AS
+SELECT DISTINCT(type), time_duration, fees FROM Delivery
+GO
+
+CREATE PROC specifydeliverytype
+@orderID int, @deliveryID int
+AS
+DECLARE @o_date date, @d_time INT
+SELECT @o_date = order_date FROM Orders WHERE order_no = @orderID 
+SELECT @d_time = time_duration FROM Delivery WHERE id = @deliveryID 
+SET @o_date = DATEADD(DAY, @d_time, @o_date)
+DECLARE @days INT
+SET @days = DATEDIFF(DAY,CURRENT_TIMESTAMP,@o_date)
+UPDATE Orders
+SET delivery_id = @deliveryID, remaining_days = @days,time_limit = @o_date
+WHERE order_no = @orderID
+GO
+
+CREATE PROC trackRemainingDays
+@orderid int, @customername varchar(20),
+@days int OUTPUT
+AS
+DECLARE @t_limit DATE
+SELECT @t_limit = time_limit FROM Orders WHERE order_no = @orderid
+SET @days = DATEDIFF(DAY,CURRENT_TIMESTAMP,@t_limit)
+UPDATE Orders
+SET remaining_days = @days
+WHERE order_no = @orderID
+GO
+
+CREATE PROC recommmend
+@customername varchar(20)
+AS
+
+GO
+
+-- Vendor
+CREATE PROC postProduct
+@vendorUsername varchar(20), @product_name varchar(20) ,@category varchar(20),
+@product_description text , @price decimal(10,2), @color varchar(20)
+AS
+INSERT INTO Product(vendor_username, product_name,category,product_description,price,color)
+VALUES(@vendorUsername, @product_name,@category,
+@product_description, @price, @color)
+GO
+
+CREATE PROC vendorviewProducts
+@vendorname varchar(20)
+AS
+SELECT *
+FROM Product WHERE vendor_username = @vendorname
+Go
+
+CREATE PROC EditProduct
+@vendorname varchar(20), @serialnumber int, @product_name varchar(20) ,@category varchar(20),
+@product_description text , @price decimal(10,2), @color varchar(20)
+AS
+UPDATE Product
+SET product_name = @product_name, category = @category, product_description= @product_description
+	, price = @price, color = @color
+WHERE serial_no = @serialnumber AND @vendorname = vendor_username
+GO
+
+CREATE PROC deleteProduct
+@vendorname varchar(20),
+@serialnumber INT
+AS
+DELETE FROM Product WHERE vendor_username = @vendorname AND serial_no = @serialnumber
+GO
+
+CREATE PROC viewQuestions
+@vendorname varchar(20)
+AS
+SELECT Q.*
+FROM Product P
+	INNER JOIN Customer_Question_Product Q ON P.serial_no = Q.serial_no
+	WHERE P.vendor_username = @vendorname
+Go
+
+CREATE PROC answerQuestions
+@vendorname varchar(20), @serialno int,@customername varchar(20), @answer text
+AS
+UPDATE Customer_Question_Product
+SET answer  = @answer
+WHERE serial_no = @serialno AND customer_name =  @customername
+GO
+
+CREATE PROC addOffer
+@offeramount int, @expiry_date datetime
+AS
+INSERT INTO offer 
+VALUES(@offeramount, @expiry_date)
+GO
+
+CREATE PROC checkOfferonProduct
+@serial int,
+@activeoffer bit Output
+AS
+IF EXISTS (SELECT * FROM offersOnProduct WHERE serial_no = @serial)
+	SET @activeoffer = '1'
+ELSE
+	SET @activeoffer = '0'
+GO
+
+CREATE PROC checkandremoveExpiredoffer
+@offerid int
+AS
+DEClARE @ex_date datetime
+SELECT @ex_date = expiry_date FROM offer WHERE offer_id = @offerid
+DECLARE @amount INT
+SELECT @amount = offer_amount FROM offer WHERE offer_id = @offerid
+DECLARE @serial INT
+SELECT @serial = serial_no
+FROM offersOnProduct
+WHERE @offerid = offer_id 
+
+IF @ex_date >= CURRENT_TIMESTAMP
+BEGIN
+	
+	UPDATE Product
+	SET final_price = price - @amount
+	WHERE serial_no = @serial
+END;
+ELSE
+BEGIN
+	UPDATE Product
+	SET final_price = final_price + @amount
+	WHERE serial_no = @serial
+	DELETE FROM offer WHERE offer_id = @offerid
+END;
+GO
+
+
+CREATE PROC applyOffer
+@vendorname varchar(20), @offerid int, @serial int
+AS
+DECLARE @active BIT
+EXEC checkOfferonProduct @serial , @active OUTPUT
+IF @active = '0'
+	BEGIN
+		EXEC checkandremoveExpiredoffer
+	END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
