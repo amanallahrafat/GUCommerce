@@ -223,14 +223,127 @@ FROM Orders
 WHERE @time = order_date AND @customername = customer_name
 
 EXEC productsinorder @customername, @id
-EXEC empemptyCart @customername
+EXEC emptyCart @customername
+GO
+
+CREATE PROC cancelOrder
+@orderid INT
+AS
+DECLARE @order_status varchar(20);
+DECLARE @customer varchar(20);
+SELECT @order_status = O.order_status, @customer = O.customer_name 
+FROM Orders O
+WHERE O.order_no = @orderid
+IF @order_status LIKE 'not processed' OR @order_status LIKE 'in process'
+	BEGIN
+		DECLARE @date datetime
+		SELECT @date = G.expiry_date
+		FROM Giftcard G
+		INNER JOIN Orders O ON G.code = O.Gift_Card_code_used
+		IF @date <= CURRENT_TIMESTAMP
+		BEGIN
+			DECLARE @remaining_points INT
+			SELECT @remaining_points = O.total_amount - (O.cash_amount+O.credit_amount)
+			FROM Orders O
+			WHERE O.order_no = @orderid
+			UPDATE Admin_Customer_Giftcard 
+			SET remaining_points = remaining_points+@remaining_points
+			WHERE customer_name = @customer
+
+			UPDATE Customer 
+			SET points = points+@remaining_points
+			WHERE username = @customer
+		END;
+		UPDATE Product
+		SET available = '1', customer_username = NULL, customer_order_id= NULL
+		WHERE customer_order_id = @orderid
+		DELETE FROM Orders WHERE order_no = @orderid
+	END;
+
+GO
+
+CREATE PROC returnProduct 
+@serialno INT,
+@orderid INT
+AS
+	DECLARE @price decimal(10,2)
+	SELECT @price = final_price
+	FROM Product WHERE serial_no = @serialno
+	UPDATE Orders
+	SET total_amount = total_amount - @price
+	WHERE order_no = @orderid
+	UPDATE Product
+	SET available = '1', customer_username = NULL, customer_order_id= NULL
+	WHERE customer_order_id = @orderid	
+	DECLARE @date datetime
+	SELECT @date = G.expiry_date
+	FROM Giftcard G
+	INNER JOIN Orders O ON G.code = O.Gift_Card_code_used
+	IF @date <= CURRENT_TIMESTAMP
+	BEGIN
+		DECLARE @remaining_points INT
+		SELECT @remaining_points = O.total_amount - (O.cash_amount+O.credit_amount)
+		FROM Orders O
+		WHERE O.order_no = @orderid
+		UPDATE Admin_Customer_Giftcard 
+		SET remaining_points = remaining_points+@remaining_points
+		WHERE customer_name = @customer
+
+		UPDATE Customer 
+		SET points = points+@remaining_points
+		WHERE username = @customer
+	END;
+GO
+
+CREATE PROC ShowproductsIbought
+@customername varchar(20)
+AS
+SELECT * FROM Product WHERE customer_username = @customername
+GO
+
+CREATE PROC rate
+@serialno int, @rate int , @customername varchar(20)
+AS
+UPDATE Product 
+SET  rate = @rate
+WHERE serial_no = @serialno AND customer_username = @customername
+GO
+
+CREATE PROC SpecifyAmount
+@customername varchar(20), @orderID int, @cash decimal(10,2), @credit decimal(10,2)
+AS
+DECLARE @points INT
+SELECT @points = points FROM Customer WHERE username = @customername
+IF @cash = NULL
+	SET @cash = 0.0 ;
+IF @credit = NULL
+	SET @credit = 0.0 ;
+
+UPDATE Orders 
+SET credit_amount = @credit, cash_amount = @cash
+WHERE order_no = @orderID
+
+DECLARE @remaining_points INT
+SELECT @remaining_points = O.total_amount - (O.cash_amount+O.credit_amount)
+FROM Orders O
+WHERE O.order_no = @orderid
+UPDATE Admin_Customer_Giftcard 
+SET remaining_points = remaining_points-@remaining_points
+WHERE customer_name = @customer
+
+UPDATE Customer 
+SET points = points-@remaining_points
+WHERE username = @customer
+
 GO
 
 
-
-
-
-
-
-
-
+CREATE PROC AddCreditCard
+@creditcardnumber varchar(20), @expirydate date , @cvv varchar(4), @customername varchar(20)
+AS
+INSERT INTO Credit_Card
+VALUES(@creditcardnumber, @expirydate,@cvv)
+INSERT INTO Customer_CreditCard
+VALUES(@customername,@creditcardnumber)
+GO
+GO
