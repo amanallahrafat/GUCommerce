@@ -211,12 +211,26 @@ CREATE PROC makeOrder
 @customername varchar(20)
 AS
 DECLARE @total_amount INT
-	
+DECLARE @time datetime
+DECLARE @id INT 
+SET @time = CURRENT_TIMESTAMP
 EXEC calculatepriceOrder @customername , @total_amount output
 INSERT INTO Orders(order_date , total_amount , customer_name,order_status)
-VALUES (CURRENT_TIMESTAMP , @total_amount , @customername, 'not processed')
+VALUES (@time , @total_amount , @customername, 'not processed')
 
+SELECT @id = order_no 
+FROM Orders
+WHERE @time = order_date AND @customername = customer_name
 
-EXEC productsinorder @customername,  
-
+EXEC productsinorder @customername, @id
+EXEC empemptyCart @customername
 GO
+
+
+
+
+
+
+
+
+
