@@ -449,12 +449,12 @@ AS
 INSERT INTO offer 
 VALUES(@offeramount, @expiry_date)
 GO
-
-CREATE PROC checkOfferonProduct
+-- here I think we should check if there is (ACTIVE OFFERS) not just offers
+CREATE PROC checkOfferonProduct -- NEED TO BE DISSCUSSED
 @serial int,
 @activeoffer bit Output
 AS
-IF EXISTS (SELECT * FROM offersOnProduct WHERE serial_no = @serial)
+IF EXISTS (SELECT * FROM offersOnProduct O1 INNER JOIN offer O2 ON O1.offer_id = O2.offer_id WHERE serial_no = @serial AND O2.expiry_date >= CURRENT_TIMESTAMP)   
 	SET @activeoffer = '1'
 ELSE
 	SET @activeoffer = '0'
@@ -488,16 +488,69 @@ BEGIN
 END;
 GO
 
-
-CREATE PROC applyOffer
+CREATE PROC applyOffer -- NEED TO BE DISSCUSSED
 @vendorname varchar(20), @offerid int, @serial int
 AS
 DECLARE @active BIT
 EXEC checkOfferonProduct @serial , @active OUTPUT
+EXEC removeExpiredoffers
 IF @active = '0'
 	BEGIN
-		EXEC checkandremoveExpiredoffer
+		DECLARE @amount INT
+		SELECT @amount = offer_amount FROM offer WHERE offer_id = @offerid
+		
+		UPDATE Product
+		SET final_price = price - @amount
+		WHERE serial_no = @serial
+
+		EXEC checkandremoveExpiredoffer @offerid
 	END;
+ELSE
+BEGIN
+	PRINT 'The product has an active offer'
+END;
+GO
+
+-- extra procedure to remove all the expired offers
+CREATE PROC removeExpiredoffers
+AS
+	DELETE FROM offer WHERE expiry_date >= CURRENT_TIMESTAMP
+GO
+
+-- The Admin procedures
+
+CREATE PROC activateVendors
+@admin_username varchar(20),@vendor_username varchar(20)
+AS
+UPDATE Vendor
+SET activated = '1' , admin_username = @admin_username
+WHERE @vendor_username LIKE username
+GO
+
+CREATE PROC inviteDeliveryPerson
+@delivery_username varchar(20), @delivery_email varchar(50)
+AS
+	INSERT INTO Users(username , email)
+	VALUES(@delivery_username , @delivery_email)
+
+	INSERT INTO Delivery_Person(is_activated , username)
+	VALUES('0' , @delivery_username)
+GO
+
+CREATE PROC reviewOrders
+AS
+SELECT *
+FROM Orders
+GO
+
+-- note that the values of the order status in the test cases is diffrent to the values in the test cases tables 
+CREATE PROC updateOrderStatusInProcess
+@order_no int
+AS
+UPDATE Orders
+SET order_status = 'in process'
+WHERE order_no = @order_no
+GO
 
 
 
