@@ -1,4 +1,4 @@
-﻿--Create DataBase GUCommerce
+﻿Create DataBase GUCommerce
 
 
 CREATE TABLE Users
@@ -15,7 +15,7 @@ CREATE TABLE User_mobile_numbers
 mobile_number varchar(20),
 username varchar(20),
 PRIMARY KEY(mobile_number, username),
-FOREIGN KEY(username) REFERENCES Users
+CONSTRAINT FK_usm FOREIGN KEY(username) REFERENCES Users
 )
 
 CREATE TABLE User_Addresses
@@ -23,38 +23,38 @@ CREATE TABLE User_Addresses
 address varchar(100),
 username varchar(20) ,
 PRIMARY KEY(address, username),
-FOREIGN KEY(username) REFERENCES Users
+CONSTRAINT FK_ua FOREIGN KEY(username) REFERENCES Users
 )
 
 CREATE TABLE Customer
 (
 username varchar(20) PRIMARY KEY,
-FOREIGN KEY(username) REFERENCES Users,
+CONSTRAINT FK_c FOREIGN KEY(username) REFERENCES Users,
 points decimal(10,2)
 )
 
 CREATE TABLE Admins
 (
 username varchar(20) PRIMARY KEY,
-FOREIGN KEY(username) REFERENCES Users,
+CONSTRAINT FK_a FOREIGN KEY(username) REFERENCES Users,
 )
 
 CREATE TABLE Vendor
 (
 username varchar(20) PRIMARY KEY,
-FOREIGN KEY(username) REFERENCES Users,
+CONSTRAINT FK_vname FOREIGN KEY(username) REFERENCES Users,
 activated BIT,
 company_name varchar(20),
 bank_acc_no varchar(20),
 admin_username varchar(20),
-FOREIGN KEY(admin_username) REFERENCES Admins
+CONSTRAINT FK_vadmin FOREIGN KEY(admin_username) REFERENCES Admins
 )
 
 CREATE TABLE Delivery_Person
 (
 username varchar(20) PRIMARY KEY,
 is_activated BIT,
-FOREIGN KEY(username) REFERENCES Users
+CONSTRAINT FK_dp FOREIGN KEY(username) REFERENCES Users
 )
 
 CREATE TABLE Credit_Card
@@ -68,7 +68,7 @@ type varchar(20),
 time_duration INT,
 fees decimal(5,3),
 username varchar(20),
-FOREIGN KEY(username) REFERENCES Admins
+CONSTRAINT FK_cc FOREIGN KEY(username) REFERENCES Admins
 )
 
 --Datatypes have to be discussed in Orders Table
@@ -82,10 +82,10 @@ Gift_Card_code_used varchar(10),
 customer_name varchar(20),
 delivery_id INT,
 creditCard_number varchar(20),
-FOREIGN KEY (Gift_Card_code_used) REFERENCES Giftcard, 
-FOREIGN KEY(customer_name) REFERENCES Customer,
-FOREIGN KEY(delivery_id) REFERENCES Delivery,
-FOREIGN KEY(creditCard_number) REFERENCES Credit_Card
+CONSTRAINT O1 FOREIGN KEY (Gift_Card_code_used) REFERENCES Giftcard, 
+CONSTRAINT O2 FOREIGN KEY(customer_name) REFERENCES Customer,
+CONSTRAINT O3 FOREIGN KEY(delivery_id) REFERENCES Delivery,
+CONSTRAINT O4 FOREIGN KEY(creditCard_number) REFERENCES Credit_Card
 
 )
 --drop table Admin_Customer_Giftcard
@@ -126,17 +126,17 @@ rate INT,
 vendor_username varchar(20),
 customer_username varchar(20),
 customer_order_id INT,
-FOREIGN KEY(vendor_username) REFERENCES Vendor,
-FOREIGN KEY(customer_order_id) REFERENCES Orders,
-FOREIGN KEY(customer_username) REFERENCES Customer
+CONSTRAINT FK_p1 FOREIGN KEY(vendor_username) REFERENCES Vendor,
+CONSTRAINT FK_p2 FOREIGN KEY(customer_order_id) REFERENCES Orders,
+CONSTRAINT FK_p3 FOREIGN KEY(customer_username) REFERENCES Customer
 )
 
 CREATE TABLE CustomerAddstoCartProduct
 (
 serial_no INT PRIMARY KEY,
 customer_name varchar(20),
-FOREIGN KEY(serial_no) REFERENCES Product,
-FOREIGN KEY(customer_name) REFERENCES Customer
+CONSTRAINT FK_customerAddCP1 FOREIGN KEY(serial_no) REFERENCES Product,
+CONSTRAINT FK_customerAddCP2 FOREIGN KEY(customer_name) REFERENCES Customer
 )
 
 CREATE TABLE Todays_Deals
@@ -145,7 +145,7 @@ deal_id INT PRIMARY KEY IDENTITY(1,1),
 deal_amount INT,
 expiry_date datetime,
 admin_username VARCHAR(20),
-FOREIGN KEY(admin_username) REFERENCES Admins
+CONSTRAINT FK_todays_deals FOREIGN KEY(admin_username) REFERENCES Admins
 )
 
 CREATE TABLE Todays_Deals_Product
@@ -154,8 +154,8 @@ deal_id INT ,
 serial_no INT, 
 issue_date datetime,
 CONSTRAINT PK_Todays_Deals_Product PRIMARY KEY (deal_id,serial_no),
-FOREIGN KEY(deal_id) REFERENCES Todays_Deals,
-FOREIGN KEY(serial_no) REFERENCES Product
+CONSTRAINT FK1_Todays_Deals_Product FOREIGN KEY(deal_id) REFERENCES Todays_Deals,
+CONSTRAINT FK2_Todays_Deals_Product FOREIGN KEY(serial_no) REFERENCES Product
 )
 
 CREATE TABLE offer
@@ -171,8 +171,8 @@ CREATE TABLE offersOnProduct
 offer_id INT,
 serial_no INT,
 CONSTRAINT PK PRIMARY KEY (offer_id,serial_no),
-FOREIGN KEY(serial_no) REFERENCES Product,
-FOREIGN KEY(offer_id) REFERENCES offer
+CONSTRAINT FK_offers_on_Product FOREIGN KEY(serial_no) REFERENCES Product,
+CONSTRAINT FK2_offers_on_Product FOREIGN KEY(offer_id) REFERENCES offer
 )
 
 CREATE TABLE Customer_Question_Product
@@ -182,15 +182,15 @@ customer_name VARCHAR(20),
 question varchar(50), 
 answer text,
 CONSTRAINT PK_CQP PRIMARY KEY (serial_no,customer_name),
-FOREIGN KEY(serial_no) REFERENCES Product,
-FOREIGN KEY(customer_name) REFERENCES Customer
+CONSTRAINT FK1_Customer_Question_Product FOREIGN KEY(serial_no) REFERENCES Product,
+CONSTRAINT FK2_Customer_Question_Product FOREIGN KEY(customer_name) REFERENCES Customer
 )
 CREATE TABLE Wishlist
 (
 username VARCHAR(20),
 name VARCHAR(20),
 CONSTRAINT PK_WL PRIMARY KEY (username,name),
-FOREIGN KEY(username) REFERENCES Customer
+CONSTRAINT FK_WL FOREIGN KEY(username) REFERENCES Customer
 )
 
 CREATE TABLE Giftcard
@@ -199,7 +199,7 @@ code varchar(10) PRIMARY KEY,
 expiry_date datetime,
 amount INT,
 username varchar(20),
-FOREIGN KEY(username) REFERENCES Admins
+CONSTRAINT FK_GC FOREIGN KEY(username) REFERENCES Admins
 )
 
 CREATE TABLE Wishlist_Product
@@ -207,8 +207,8 @@ CREATE TABLE Wishlist_Product
 username VARCHAR(20),
 wish_name VARCHAR(20),
 serial_no INT,
-FOREIGN KEY(username, wish_name) REFERENCES Wishlist,
-FOREIGN KEY(serial_no) REFERENCES Product
+CONSTRAINT FK_WLP FOREIGN KEY(username, wish_name) REFERENCES Wishlist,
+CONSTRAINT FK2_WLP FOREIGN KEY(serial_no) REFERENCES Product
 )
 
 CREATE TABLE Admin_Customer_Giftcard
@@ -218,9 +218,9 @@ customer_name VARCHAR(20),
 admin_username VARCHAR(20),
 remaining_points INT,
 CONSTRAINT PK_ACG PRIMARY KEY (code,customer_name,admin_username),
-FOREIGN KEY(code) REFERENCES Giftcard,
-FOREIGN KEY(customer_name) REFERENCES Customer,
-FOREIGN KEY(admin_username) REFERENCES Admins
+CONSTRAINT FK_ACG FOREIGN KEY(code) REFERENCES Giftcard,
+CONSTRAINT FK1_ACG FOREIGN KEY(customer_name) REFERENCES Customer,
+CONSTRAINT FK2_ACG FOREIGN KEY(admin_username) REFERENCES Admins
 )
 
 CREATE TABLE Admin_Delivery_Order
@@ -230,9 +230,9 @@ order_no INT,
 admin_username VARCHAR(20),
 delivery_window VARCHAR(50),
 CONSTRAINT PK_ADO PRIMARY KEY (delivery_username,order_no),
-FOREIGN KEY(delivery_username) REFERENCES Delivery_person,
-FOREIGN KEY(order_no) REFERENCES orders,
-FOREIGN KEY(admin_username) REFERENCES Admins
+CONSTRAINT FK1_ADO FOREIGN KEY(delivery_username) REFERENCES Delivery_person,
+CONSTRAINT FK2_ADO FOREIGN KEY(order_no) REFERENCES orders,
+CONSTRAINT FK3_ADO FOREIGN KEY(admin_username) REFERENCES Admins
 )
 
 CREATE TABLE Customer_CreditCard
@@ -240,8 +240,8 @@ CREATE TABLE Customer_CreditCard
 customer_name VARCHAR(20),
 cc_number varchar(20) ,
 CONSTRAINT PK_CCC PRIMARY KEY (customer_name,cc_number),
-FOREIGN KEY(customer_name) REFERENCES Customer,
-FOREIGN KEY(cc_number) REFERENCES Credit_Card
+CONSTRAINT FK1_CCC FOREIGN KEY(customer_name) REFERENCES Customer,
+CONSTRAINT FK2_CCC FOREIGN KEY(cc_number) REFERENCES Credit_Card
 )
 
 
