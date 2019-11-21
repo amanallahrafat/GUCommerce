@@ -63,7 +63,7 @@ expiry_date datetime,
 cvv_code varchar(20))
 
 CREATE TABLE Delivery(
-id INT PRIMARY KEY,
+id INT PRIMARY KEY IDENTITY (1,1),
 type varchar(20),
 time_duration INT,
 fees decimal(5,3),
@@ -141,7 +141,7 @@ FOREIGN KEY(customer_name) REFERENCES Customer
 
 CREATE TABLE Todays_Deals
 (
-deal_id INT PRIMARY KEY,
+deal_id INT PRIMARY KEY IDENTITY(1,1),
 deal_amount INT,
 expiry_date datetime,
 admin_username VARCHAR(20),
@@ -150,7 +150,7 @@ FOREIGN KEY(admin_username) REFERENCES Admins
 
 CREATE TABLE Todays_Deals_Product
 (
-deal_id INT,
+deal_id INT ,
 serial_no INT, 
 issue_date datetime,
 CONSTRAINT PK_Todays_Deals_Product PRIMARY KEY (deal_id,serial_no),
@@ -164,6 +164,7 @@ offer_id INT IDENTITY(1,1) PRIMARY KEY,
 offer_amount INT,
 expiry_date DATETIME
 )
+
 
 CREATE TABLE offersOnProduct
 (

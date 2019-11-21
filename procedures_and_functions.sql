@@ -552,8 +552,141 @@ SET order_status = 'in process'
 WHERE order_no = @order_no
 GO
 
+CREATE PROC addDelivery
+@delivery_type varchar(20),
+@time_duration int,
+@fees decimal(5,3),
+@admin_username varchar(20)
+AS
+INSERT INTO Delivery(type ,time_duration , fees , username)
+VALUES(@delivery_type, @time_duration,@fees,@admin_username)
+GO
+
+CREATE PROC assignOrdertoDelivery
+@delivery_username varchar(20), @order_no int,@admin_username varchar(20)
+AS
+INSERT INTO Admin_Delivery_Order(delivery_username , order_no , admin_username)
+VALUES(@delivery_username ,@order_no , @admin_username )
+GO
+
+CREATE PROC createTodaysDeal
+@deal_amount int,@admin_username varchar(20),@expiry_date datetime
+AS
+INSERT INTO Todays_Deals(deal_amount , admin_username , expiry_date)
+VALUES(@deal_amount , @admin_username ,@expiry_date)
+GO
+
+CREATE PROC checkTodaysDealOnProduct
+@serial_no INT,
+@activeDeal BIT OUTPUT
+AS
+IF EXISTS (SELECT * FROM Todays_Deals_Product WHERE @serial_no = serial_no)
+	BEGIN
+	SET @activeDeal = '1'
+	END;
+
+ELSE
+	BEGIN
+	SET @activeDeal = '0'
+	END;
+
+GO
+
+CREATE PROC addTodaysDealOnProduct
+@deal_id int, @serial_no int
+AS
+	INSERT INTO Todays_Deals_Product(deal_id , serial_no)
+	VALUES(@deal_id , @serial_no)
+GO
+
+CREATE PROC removeExpiredDeal
+@deal_iD int
+AS
+		DELETE FROM Todays_Deals WHERE expiry_date >= CURRENT_TIMESTAMP
+GO
 
 
+CREATE PROC createGiftCard
+@code varchar(10),@expiry_date datetime,@amount int,@admin_username varchar(20)
+AS
+	INSERT INTO Giftcard(code , expiry_date , amount , username)
+	VALUES(@code , @expiry_date ,@amount , @admin_username)
+GO
+
+CREATE PROC removeExpiredGiftCard
+@code varchar(10)
+AS
+	DEClARE @ex_date datetime
+	SELECT @ex_date = expiry_date FROM Giftcard WHERE code = @code
+	DECLARE @amount INT
+	SELECT @amount = amount FROM Giftcard WHERE amount = @amount
+	DECLARE @customer_username INT
+	SELECT @customer_username = customer_name
+	FROM Admin_Customer_Giftcard
+	WHERE @code = code 
+
+	IF @ex_date >= CURRENT_TIMESTAMP
+	BEGIN
+	
+		UPDATE Customer
+		SET points = points + @amount
+		WHERE @customer_username = username
+	END;
+	ELSE
+	BEGIN
+		UPDATE Customer
+		SET points = points - @amount
+		WHERE @customer_username = username
+		DELETE FROM Giftcard WHERE code = @code
+	END;	
+GO
+
+CREATE PROC checkGiftCardOnCustomer
+@code varchar(10),
+@activeGiftCard BIT OUTPUT
+AS
+	EXEC removeExpiredGiftCard @code
+	IF EXISTS (SELECT * FROM Admin_Customer_Giftcard WHERE @code = code)
+		BEGIN
+			SET @activeGiftCard = '1';
+		END;
+	ELSE
+		BEGIN
+			SET @activeGiftCard = '0';
+		END;
+GO
+
+CREATE PROC giveGiftCardtoCustomer
+@code varchar(10),@customer_name varchar(20),@admin_username varchar(20)
+AS
+DECLARE @amount INT
+SELECT @amount = amount FROM Giftcard WHERE @code = code
+
+INSERT INTO Admin_Customer_Giftcard(code , customer_name , admin_username)
+VALUES(@code , @customer_name , @admin_username)
+
+UPDATE Customer
+SET points = points + @amount
+WHERE @customer_name = username
+
+GO
+
+
+CREATE PROC acceptAdminInvitation
+@delivery_username varchar(20)	
+AS
+UPDATE Delivery_Person
+SET is_activated = '1'
+WHERE @delivery_username = username
+GO
+-- not finished
+CREATE PROC deliveryPersonUpdateInfo
+@username varchar(20),@first_name varchar(20),@last_name varchar(20),@password varchar(20),@email varchar(50)
+AS
+	UPDATE Users
+	SET   first_name = @first_name , last_name = @last_name , password = @password , email = @email
+	WHERE username = @username
+GO
 
 
 
