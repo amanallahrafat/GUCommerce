@@ -94,7 +94,7 @@ CREATE PROC searchbyname
 @text varchar(20)
 AS
 SELECT * FROM Product
-WHERE product_name LIKE @text
+WHERE product_name LIKE '%'+@text+'%'
 GO
 
 CREATE PROC AddQuestion
@@ -688,11 +688,38 @@ AS
 	WHERE username = @username
 GO
 
+CREATE PROC viewmyorders
+@deliveryperson varchar(20)
+AS
+SELECT O.*
+FROM Admin_Delivery_Order ADO
+	INNER JOIN Orders O ON ADO.order_no = O.order_no
+WHERE ADO.delivery_username = @deliveryperson
+GO
 
+CREATE PROC specifyDeliveryWindow
+@delivery_username varchar(20),@order_no int,@delivery_window varchar(50)
+AS
+UPDATE Admin_Delivery_Order
+SET delivery_window = @delivery_window
+WHERE delivery_username = @delivery_username AND order_no = @order_no
+GO
 
+CREATE PROC updateOrderStatusOutforDelivery
+@order_no int
+AS
+UPDATE Orders
+SET order_status = 'Out for delivery'
+WHERE order_no = @order_no
+GO
 
-
-
+CREATE PROC updateOrderStatusDelivered
+@order_no int
+AS
+UPDATE Orders
+SET order_status = 'delivered'
+WHERE order_no = @order_no
+GO
 
 
 
