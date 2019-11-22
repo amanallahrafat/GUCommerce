@@ -95,6 +95,7 @@ CREATE PROC searchbyname
 AS
 SELECT * FROM Product
 WHERE product_name LIKE '%'+@text+'%'
+
 GO
 
 CREATE PROC AddQuestion
@@ -389,6 +390,21 @@ GO
 CREATE PROC recommmend
 @customername varchar(20)
 AS
+GO
+
+CREATE FUNCTION customers_with_cart(@customername varchar(20))
+RETURNS TABLE
+AS
+	RETURN (SELECT DISTINCT customer_name FROM CustomerAddstoCartProduct
+	WHERE customer_name NOT LIKE @customername
+	GROUP BY customer_name)
+GO
+
+
+CREATE FUNCTION top3_customers (@customer_name VARVHAR(20))
+RETURNS TABLE
+AS
+	
 GO
 
 
