@@ -386,27 +386,39 @@ UPDATE Orders
 SET remaining_days = @days
 WHERE order_no = @orderID
 GO
-
+----------------------------------------
 CREATE PROC recommmend
 @customername varchar(20)
 AS
-GO
-
-CREATE FUNCTION customers_with_cart(@customername varchar(20))
-RETURNS TABLE
-AS
-	RETURN (SELECT DISTINCT customer_name FROM CustomerAddstoCartProduct
-	WHERE customer_name NOT LIKE @customername
-	GROUP BY customer_name)
-GO
-
-
-CREATE FUNCTION top3_customers (@customer_name VARVHAR(20))
-RETURNS TABLE
-AS
+	DECLARE @recommended_serial TABLE (serial INT PRIMARY KEY)
+	INSERT INTO @recommended_serial
+	SELECT *
+	FROM dbo.top3_product(@customername) UNION (SELECT * FROM dbo.top3_wishlist(@customername))
 	
+	SELECT P2.*
+	FROM @recommended_serial P1 INNER JOIN Product P2 ON P1.serial = P2.serial_no
 GO
 
+CREATE FUNCTION top3_customers(@customer_name VARCHAR(20))
+RETURNS TABLE
+AS
+ 	RETURN (SELECT TOP 3 c2.customer_name 
+			FROM CustomerAddstoCartProduct C1 INNER JOIN CustomerAddstoCartProduct C2 ON C1.serial_no = C2.serial_no 
+			WHERE (C1.customer_name LIKE @customer_name) AND (C1.customer_name NOT LIKE C2.customer_name)
+			GROUP BY C2.customer_name
+			ORDER  BY COUNT(*) DESC
+			)
+GO
+
+CREATE FUNCTION  top3_wishlist (@customer_name VARCHAR(20))
+RETURNS TABLE
+AS
+	RETURN (SELECT TOP 3 WH.serial_no
+			FROM dbo.top3_customers(@customer_name) C INNER JOIN Wishlist_Product WH ON C.customer_name LIKE WH.username
+			GROUP BY WH.serial_no
+			ORDER BY COUNT(*) DESC
+			)
+GO
 
 CREATE FUNCTION top3_Cat (@customername VARCHAR(20))
 RETURNS TABLE
@@ -414,8 +426,10 @@ AS
 	RETURN (SELECT TOP 3 p.category
 		FROM CustomerAddstoCartProduct c
 		INNER JOIN Product p ON c.serial_no = p.serial_no
-		WHERE c.customer_name = @customername
-		GROUP BY p.category)
+		WHERE c.customer_name LIKE @customername
+		GROUP BY p.category
+		ORDER BY count(*) DESC
+		)
 GO
 
 --drop function top3_Cat
@@ -425,9 +439,9 @@ RETURNS TABLE
 AS
 	RETURN (SELECT TOP 3 p.serial_no
 			FROM Wishlist_Product wp INNER JOIN Product p ON p.serial_no = wp.serial_no
-			INNER JOIN dbo.top3_Cat(@customername) c ON c.category = p.category
+			INNER JOIN dbo.top3_Cat(@customername) c ON c.category LIKE p.category
 			GROUP BY p.serial_no
-			ORDER BY count(*))
+			ORDER BY count(*) DESC)
 GO
 --drop function top3_product
 /*
@@ -530,7 +544,7 @@ BEGIN
 	DELETE FROM offer WHERE offer_id = @offerid
 END;
 GO
-
+--drop proc applyOffer
 CREATE PROC applyOffer -- NEED TO BE DISSCUSSED
 @vendorname varchar(20), @offerid int, @serial int
 AS
@@ -655,32 +669,32 @@ AS
 	INSERT INTO Giftcard(code , expiry_date , amount , username)
 	VALUES(@code , @expiry_date ,@amount , @admin_username)
 GO
-
+--DROP PROC removeExpiredGiftCard
 CREATE PROC removeExpiredGiftCard
 @code varchar(10)
 AS
 	DEClARE @ex_date datetime
-	SELECT @ex_date = expiry_date FROM Giftcard WHERE code = @code
+	SELECT @ex_date = expiry_date FROM Giftcard WHERE code LIKE @code
 	DECLARE @amount INT
 	SELECT @amount = amount FROM Giftcard WHERE amount = @amount
 	DECLARE @customer_username INT
 	SELECT @customer_username = customer_name
 	FROM Admin_Customer_Giftcard
-	WHERE @code = code 
+	WHERE @code LIKE code 
 
 	IF @ex_date >= CURRENT_TIMESTAMP
 	BEGIN
 	
 		UPDATE Customer
 		SET points = points + @amount
-		WHERE @customer_username = username
+		WHERE @customer_username LIKE username
 	END;
 	ELSE
 	BEGIN
 		UPDATE Customer
 		SET points = points - @amount
-		WHERE @customer_username = username
-		DELETE FROM Giftcard WHERE code = @code
+		WHERE @customer_username LIKE username
+		DELETE FROM Giftcard WHERE code LIKE @code
 	END;	
 GO
 
@@ -689,7 +703,7 @@ CREATE PROC checkGiftCardOnCustomer
 @activeGiftCard BIT OUTPUT
 AS
 	EXEC removeExpiredGiftCard @code
-	IF EXISTS (SELECT * FROM Admin_Customer_Giftcard WHERE @code = code)
+	IF EXISTS (SELECT * FROM Admin_Customer_Giftcard WHERE @code LIKE code)
 		BEGIN
 			SET @activeGiftCard = '1';
 		END;
@@ -703,14 +717,14 @@ CREATE PROC giveGiftCardtoCustomer
 @code varchar(10),@customer_name varchar(20),@admin_username varchar(20)
 AS
 DECLARE @amount INT
-SELECT @amount = amount FROM Giftcard WHERE @code = code
+SELECT @amount = amount FROM Giftcard WHERE @code LIKE code
 
 INSERT INTO Admin_Customer_Giftcard(code , customer_name , admin_username)
 VALUES(@code , @customer_name , @admin_username)
 
 UPDATE Customer
 SET points = points + @amount
-WHERE @customer_name = username
+WHERE @customer_name LIKE username
 
 GO
 
@@ -720,9 +734,9 @@ CREATE PROC acceptAdminInvitation
 AS
 UPDATE Delivery_Person
 SET is_activated = '1'
-WHERE @delivery_username = username
+WHERE @delivery_username LIKE username
 GO
--- not finished
+
 CREATE PROC deliveryPersonUpdateInfo
 @username varchar(20),@first_name varchar(20),@last_name varchar(20),@password varchar(20),@email varchar(50)
 AS
@@ -737,7 +751,7 @@ AS
 SELECT O.*
 FROM Admin_Delivery_Order ADO
 	INNER JOIN Orders O ON ADO.order_no = O.order_no
-WHERE ADO.delivery_username = @deliveryperson
+WHERE ADO.delivery_username LIKE @deliveryperson
 GO
 
 CREATE PROC specifyDeliveryWindow
@@ -745,7 +759,7 @@ CREATE PROC specifyDeliveryWindow
 AS
 UPDATE Admin_Delivery_Order
 SET delivery_window = @delivery_window
-WHERE delivery_username = @delivery_username AND order_no = @order_no
+WHERE delivery_username LIKE @delivery_username AND order_no = @order_no
 GO
 
 CREATE PROC updateOrderStatusOutforDelivery
