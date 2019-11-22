@@ -35,6 +35,7 @@ BEGIN
 	DELETE FROM Admin_Customer_Giftcard WHERE admin_username IN ( SELECT admin_username FROM deleted)
 	DELETE FROM Admin_Delivery_Order WHERE admin_username IN ( SELECT admin_username FROM deleted)
 	DELETE FROM Vendor WHERE admin_username IN ( SELECT admin_username FROM deleted)
+	DELETE FROM Admins WHERE username IN ( SELECT username FROM deleted)
 END
 GO
 
@@ -49,6 +50,7 @@ BEGIN
 	DELETE FROM Customer_CreditCard WHERE customer_name IN ( SELECT customer_name FROM deleted)
 	DELETE FROM Admin_Customer_Giftcard WHERE customer_name IN ( SELECT customer_name FROM deleted)
 	DELETE FROM Wishlist WHERE username IN ( SELECT username FROM deleted)
+	DELETE FROM Customer WHERE username IN ( SELECT username FROM deleted)
 END
 GO
 
@@ -61,6 +63,7 @@ BEGIN
 	DELETE FROM offersOnProduct WHERE serial_no IN ( SELECT serial_no FROM deleted)
 	DELETE FROM Customer_Question_Product WHERE serial_no IN ( SELECT serial_no FROM deleted)
 	DELETE FROM Wishlist_Product WHERE serial_no IN ( SELECT serial_no FROM deleted)
+	DELETE FROM Product WHERE serial_no IN ( SELECT serial_no FROM deleted)
 END
 GO
 
@@ -70,6 +73,7 @@ AS
 BEGIN
 	DELETE FROM Product WHERE customer_order_id IN ( SELECT customer_order_id FROM deleted)
 	DELETE FROM Admin_Delivery_Order WHERE order_no IN ( SELECT order_no FROM deleted)
+	DELETE FROM Orders WHERE order_no IN ( SELECT order_no FROM deleted)
 END
 GO
 

@@ -285,7 +285,7 @@ AS
 			UPDATE Customer 
 			SET points = points+@remaining_points
 			WHERE username = @customer
-	  END;
+	 END;
 	DECLARE @price decimal(10,2)
 	SELECT @price = final_price
 	FROM Product WHERE serial_no = @serialno
