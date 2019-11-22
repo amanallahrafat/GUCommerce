@@ -81,21 +81,20 @@ GO
 
 CREATE PROC showProducts
 AS
-SELECT * FROM Product
+SELECT * FROM Product WHERE Product.available = ' 1 '
 GO
 
 CREATE PROC ShowProductsbyPrice
 AS
-SELECT * FROM Product
+SELECT * FROM Product WHERE Product.available = ' 1 '
 ORDER BY price
 GO
 
 CREATE PROC searchbyname
 @text varchar(20)
 AS
-SELECT * FROM Product
-WHERE product_name LIKE '%'+@text+'%'
-
+SELECT * FROM Product 
+WHERE product_name LIKE '%'+@text+'%' AND Product.available = ' 1 '
 GO
 
 CREATE PROC AddQuestion
@@ -182,7 +181,7 @@ CREATE PROC calculatepriceOrder
 @customername varchar(20),
 @sum  DECIMAL(10,2) OUTPUT
 AS 
-SELECT sum(price)
+SELECT @sum = sum(price)
 FROM dbo.viewMyCartF(@customername)
 GO
 
@@ -267,6 +266,26 @@ CREATE PROC returnProduct
 @serialno INT,
 @orderid INT
 AS
+	DECLARE @customer VARCHAR(20)
+	SElECT @customer = customer_username FROM Product WHERE serial_no = @serialno
+	DECLARE @date datetime
+	SELECT @date = G.expiry_date
+	FROM Giftcard G
+	INNER JOIN Orders O ON G.code = O.Gift_Card_code_used
+	IF @date <= CURRENT_TIMESTAMP
+		BEGIN
+			DECLARE @remaining_points INT
+			SELECT @remaining_points = O.total_amount - (O.cash_amount+O.credit_amount)
+			FROM Orders O
+			WHERE O.order_no = @orderid
+			UPDATE Admin_Customer_Giftcard 
+			SET remaining_points = remaining_points+@remaining_points
+			WHERE customer_name = @customer
+
+			UPDATE Customer 
+			SET points = points+@remaining_points
+			WHERE username = @customer
+	  END;
 	DECLARE @price decimal(10,2)
 	SELECT @price = final_price
 	FROM Product WHERE serial_no = @serialno
@@ -276,24 +295,6 @@ AS
 	UPDATE Product
 	SET available = '1', customer_username = NULL, customer_order_id= NULL
 	WHERE customer_order_id = @orderid	
-	DECLARE @date datetime
-	SELECT @date = G.expiry_date
-	FROM Giftcard G
-	INNER JOIN Orders O ON G.code = O.Gift_Card_code_used
-	IF @date <= CURRENT_TIMESTAMP
-	BEGIN
-		DECLARE @remaining_points INT
-		SELECT @remaining_points = O.total_amount - (O.cash_amount+O.credit_amount)
-		FROM Orders O
-		WHERE O.order_no = @orderid
-		UPDATE Admin_Customer_Giftcard 
-		SET remaining_points = remaining_points+@remaining_points
-		WHERE customer_name = @customer
-
-		UPDATE Customer 
-		SET points = points+@remaining_points
-		WHERE username = @customer
-	END;
 GO
 
 CREATE PROC ShowproductsIbought
@@ -330,11 +331,11 @@ FROM Orders O
 WHERE O.order_no = @orderid
 UPDATE Admin_Customer_Giftcard 
 SET remaining_points = remaining_points-@remaining_points
-WHERE customer_name = @customer
+WHERE customer_name = @customername
 
 UPDATE Customer 
 SET points = points-@remaining_points
-WHERE username = @customer
+WHERE username = @customername
 
 GO
 
