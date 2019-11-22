@@ -1,4 +1,4 @@
-﻿Create DataBase GUCommerce
+﻿--Create DataBase GUCommerce
 
 
 CREATE TABLE Users

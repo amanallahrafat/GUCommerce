@@ -77,8 +77,9 @@ VALUES(3,'Blue pen' ,'stationary' ,'useful pen' , 10 , 10 , 'Blue' , 1,0 , 'hade
 INSERT INTO Product(serial_no , product_name , category , product_description , price , final_price , color , available , rate , vendor_username)
 VALUES(4,'Blue pen' ,'stationary' ,'useful pen' , 10 , 10 , 'Blue' , 0,0 , 'hadeel.adel')
 SET IDENTITY_INSERT Product off;
-
-
+UPDATE Product
+SET category = 'fashion'
+where serial_no = 4
 -- DEALS INSERTION
 SET IDENTITY_INSERT Todays_Deals ON;
 
@@ -104,14 +105,14 @@ SET IDENTITY_INSERT offer OFF;
 
 
 -- WISHLIST INSERTION
-INSERT INTO Wishlist(username , name)
+INSERT INTO Wishlist
 VALUES('ammar.yasser' , 'fashion')
 
 
 -- WHISHLIST PRODUCT
 -- there is a problem : no serial_no in column product with value 2 
 INSERT INTO Wishlist_Product
-VALUES('ammar.yasser' , 'fashion' , 2)
+VALUES('ammar.yasser' , 'fashion' , 4)
 
 -- WILL BE INSERTED AFTER EXEC THE PROCEDURE ADD TO WISHLIST IN THE TEST CASES
 --INSERT INTO Wishlist_Product

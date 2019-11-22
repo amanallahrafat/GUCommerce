@@ -182,7 +182,7 @@ CREATE PROC calculatepriceOrder
 @sum  DECIMAL(10,2) OUTPUT
 AS 
 SELECT sum(price)
-FROM viewMyCartF(@customername)
+FROM dbo.viewMyCartF(@customername)
 GO
 
 CREATE PROC productsinorder
@@ -389,9 +389,36 @@ GO
 CREATE PROC recommmend
 @customername varchar(20)
 AS
-
 GO
 
+
+CREATE FUNCTION top3_Cat (@customername VARCHAR(20))
+RETURNS TABLE
+AS
+	RETURN (SELECT TOP 3 p.category
+		FROM CustomerAddstoCartProduct c
+		INNER JOIN Product p ON c.serial_no = p.serial_no
+		WHERE c.customer_name = @customername
+		GROUP BY p.category)
+GO
+
+--drop function top3_Cat
+go
+CREATE FUNCTION top3_product (@customername VARCHAR(20))
+RETURNS TABLE
+AS
+	RETURN (SELECT TOP 3 p.serial_no
+			FROM Wishlist_Product wp INNER JOIN Product p ON p.serial_no = wp.serial_no
+			INNER JOIN dbo.top3_Cat(@customername) c ON c.category = p.category
+			GROUP BY p.serial_no
+			ORDER BY count(*))
+GO
+--drop function top3_product
+/*
+SELECT *
+from dbo.top3_product('ammar.yasser');
+GO
+*/
 -- Vendor
 CREATE PROC postProduct
 @vendorUsername varchar(20), @product_name varchar(20) ,@category varchar(20),
@@ -720,7 +747,6 @@ UPDATE Orders
 SET order_status = 'delivered'
 WHERE order_no = @order_no
 GO
-
 
 
 
