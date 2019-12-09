@@ -122,12 +122,22 @@ DELETE FROM CustomerAddstoCartProduct
 WHERE serial_no = @serial AND customer_name LIKE @customername
 GO
 
+
 CREATE PROC createWishlist 
 @customername varchar(20),
-@name varchar(20)
+@name varchar(20),
+@done BIT
 AS
+IF EXISTS(SELECT * FROM Wishlist WHERE username LIKE @customername AND name LIKE @name)
+BEGIN 
+	SET @done = '0';
+END
+ELSE
+BEGIN
+SET @done = '1';
 INSERT INTO Wishlist
 values(@customername , @name)
+END
 GO
 
 CREATE PROC AddtoWhishlist 
@@ -339,14 +349,22 @@ WHERE username = @customername
 
 GO
 
-
+--DROP PROC AddCreditCard;
 CREATE PROC AddCreditCard
-@creditcardnumber varchar(20), @expirydate date , @cvv varchar(4), @customername varchar(20)
+@creditcardnumber varchar(20), @expirydate date , @cvv varchar(4), @customername varchar(20) , @done bit
 AS
-INSERT INTO Credit_Card
-VALUES(@creditcardnumber, @expirydate,@cvv)
-INSERT INTO Customer_CreditCard
-VALUES(@customername,@creditcardnumber)
+if EXISTS(SELECT * FROM Credit_Card WHERE number LIKE @creditcardnumber)
+		begin
+		SET @done = '0'; 
+		END	
+ELSE
+BEGIN
+	SET @done = '1';
+	INSERT INTO Credit_Card
+	VALUES(@creditcardnumber, @expirydate,@cvv)
+	INSERT INTO Customer_CreditCard
+	VALUES(@customername,@creditcardnumber)
+END	
 GO
 
 CREATE PROC ChooseCreditCard
