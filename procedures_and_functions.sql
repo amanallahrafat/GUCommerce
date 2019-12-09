@@ -131,7 +131,7 @@ INSERT INTO Wishlist
 values(@customername , @name)
 GO
 
-CREATE PROC AddtoWhishlist 
+CREATE PROC AddtoWishlist 
 @customername varchar(20),
 @wishlistname varchar(20),
 @serial INT
@@ -140,7 +140,7 @@ INSERT INTO Wishlist_Product
 values (@customername , @wishlistname , @serial)
 GO
 
-CREATE PROC removefromWhishlist 
+CREATE PROC removefromWishlist 
 @customername varchar(20),
 @wishlistname varchar(20),
 @serial INT
