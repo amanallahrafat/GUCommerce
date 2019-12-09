@@ -125,19 +125,10 @@ GO
 
 CREATE PROC createWishlist 
 @customername varchar(20),
-@name varchar(20),
-@done BIT
+@name varchar(20)
 AS
-IF EXISTS(SELECT * FROM Wishlist WHERE username LIKE @customername AND name LIKE @name)
-BEGIN 
-	SET @done = '0';
-END
-ELSE
-BEGIN
-SET @done = '1';
 INSERT INTO Wishlist
 values(@customername , @name)
-END
 GO
 
 CREATE PROC AddtoWhishlist 
@@ -349,22 +340,14 @@ WHERE username = @customername
 
 GO
 
---DROP PROC AddCreditCard;
 CREATE PROC AddCreditCard
-@creditcardnumber varchar(20), @expirydate date , @cvv varchar(4), @customername varchar(20) , @done bit
+@creditcardnumber varchar(20), @expirydate date , @cvv varchar(4), @customername varchar(20)
 AS
-if EXISTS(SELECT * FROM Credit_Card WHERE number LIKE @creditcardnumber)
-		begin
-		SET @done = '0'; 
-		END	
-ELSE
-BEGIN
-	SET @done = '1';
 	INSERT INTO Credit_Card
 	VALUES(@creditcardnumber, @expirydate,@cvv)
+
 	INSERT INTO Customer_CreditCard
 	VALUES(@customername,@creditcardnumber)
-END	
 GO
 
 CREATE PROC ChooseCreditCard
@@ -594,13 +577,19 @@ AS
 GO
 
 -- The Admin procedures
-
+--drop proc activateVendors
 CREATE PROC activateVendors
-@admin_username varchar(20),@vendor_username varchar(20)
+@admin_username varchar(20),@vendor_username varchar(20),@res int output
 AS
+if('1' = (select activated from Vendor where username = @vendor_username)) 
+	set @res = 0 ;
+else
+begin
+set @res = 1 ;
 UPDATE Vendor
 SET activated = '1' , admin_username = @admin_username
 WHERE @vendor_username LIKE username
+end
 GO
 
 CREATE PROC inviteDeliveryPerson
@@ -668,11 +657,20 @@ ELSE
 
 GO
 
+--drop proc addTodaysDealOnProduct
 CREATE PROC addTodaysDealOnProduct
-@deal_id int, @serial_no int
+@deal_id int, @serial_no int , @res BIT output
 AS
+if(not exists(select * from Product where @serial_no = serial_no))
+	begin
+	set @res = '0'
+	end
+else
+	begin
+	set @res = '1'
 	INSERT INTO Todays_Deals_Product(deal_id , serial_no)
 	VALUES(@deal_id , @serial_no)
+	end
 GO
 
 CREATE PROC removeExpiredDeal
