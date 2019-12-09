@@ -106,20 +106,35 @@ INSERT INTO Customer_Question_Product(serial_no , customer_name , question)
 VALUES (@serial , @customer , @question)
 GO
 
+
 CREATE PROC addToCart 
 @customername varchar(20),
-@serial INT
+@serial INT,
+@already_added INT output
 AS
-INSERT INTO CustomerAddstoCartProduct
-values(@serial, @customername)
+IF EXISTS(SELECT* FROM CustomerAddstoCartProduct WHERE customer_name LIKE @customername AND @serial = serial_no)
+	SET @already_added = 1;
+ELSE
+	BEGIN
+		SET @already_added = 0;
+		INSERT INTO CustomerAddstoCartProduct
+		values(@serial, @customername)
+	END
 GO
 
 CREATE PROC removefromCart 
 @customername varchar(20),
-@serial INT
+@serial INT,
+@found INT output
 AS
-DELETE FROM CustomerAddstoCartProduct
-WHERE serial_no = @serial AND customer_name LIKE @customername
+IF EXISTS(SELECT* FROM  CustomerAddstoCartProduct WHERE customer_name LIKE @customername AND serial_no = @serial)
+BEGIN
+	SET @found = 1;
+	DELETE FROM CustomerAddstoCartProduct
+	WHERE serial_no = @serial AND customer_name LIKE @customername
+END
+ELSE
+	SET @found = 0;
 GO
 
 
@@ -131,22 +146,37 @@ INSERT INTO Wishlist
 values(@customername , @name)
 GO
 
+
 CREATE PROC AddtoWishlist 
 @customername varchar(20),
 @wishlistname varchar(20),
-@serial INT
+@serial INT,
+@already_added INT OUTPUT
 AS
+IF	NOT EXISTS(SELECT* FROM Wishlist_Product WHERE @customername LIKE username AND @wishlistname LIKE wish_name AND serial_no = @serial)
+BEGIN
+SET @already_added = 0;
 INSERT INTO Wishlist_Product
 values (@customername , @wishlistname , @serial)
+END
+ELSE
+	SET @already_added = 1;
 GO
 
 CREATE PROC removefromWishlist 
 @customername varchar(20),
 @wishlistname varchar(20),
-@serial INT
+@serial INT,
+@found INT output
 AS
-DELETE FROM Wishlist_Product
-WHERE @customername Like username AND @wishlistname LIKE wish_name AND @serial = serial_no
+IF EXISTS(SELECT * FROM Wishlist_Product WHERE username like @customername AND serial_no = @serial AND wish_name like @wishlistname)
+begin
+	SET @found = 1;
+	DELETE FROM Wishlist_Product
+	WHERE @customername Like username AND @wishlistname LIKE wish_name AND @serial = serial_no
+end
+else
+	set @found = 0;
 GO
 
 CREATE PROC showWishlistProduct
