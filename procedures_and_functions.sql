@@ -49,9 +49,10 @@ IF EXISTS (SELECT * FROM Users WHERE username LIKE @username AND password LIKE @
 
 	END;
 ELSE
+	BEGIN
 	SET @success = '0'
 	SET @type = -1
-
+	END;
 GO
 
 /*EXEC customerRegister 'ahmed.ashraf', 'ahmed','ashraf','pass123','ahmed@yahoo.com'
@@ -106,7 +107,6 @@ INSERT INTO Customer_Question_Product(serial_no , customer_name , question)
 VALUES (@serial , @customer , @question)
 GO
 
-
 CREATE PROC addToCart 
 @customername varchar(20),
 @serial INT,
@@ -137,7 +137,6 @@ ELSE
 	SET @found = 0;
 GO
 
-
 CREATE PROC createWishlist 
 @customername varchar(20),
 @name varchar(20)
@@ -145,7 +144,6 @@ AS
 INSERT INTO Wishlist
 values(@customername , @name)
 GO
-
 
 CREATE PROC AddtoWishlist 
 @customername varchar(20),
@@ -178,6 +176,7 @@ end
 else
 	set @found = 0;
 GO
+
 
 CREATE PROC showWishlistProduct
 @customername varchar(20),
@@ -239,11 +238,11 @@ WHERE customer_name like @customername
 GO
 
 CREATE PROC makeOrder
-@customername varchar(20)
+@customername varchar(20),
+@id INT OUTPUT,
+@total_amount INT OUTPUT
 AS
-DECLARE @total_amount INT
 DECLARE @time datetime
-DECLARE @id INT 
 SET @time = CURRENT_TIMESTAMP
 EXEC calculatepriceOrder @customername , @total_amount output
 INSERT INTO Orders(order_date , total_amount , customer_name,order_status)
@@ -343,7 +342,8 @@ WHERE serial_no = @serialno AND customer_username = @customername
 GO
 
 CREATE PROC SpecifyAmount
-@customername varchar(20), @orderID int, @cash decimal(10,2), @credit decimal(10,2)
+@customername varchar(20), @orderID int, @cash decimal(10,2), @credit decimal(10,2),
+@success BIT OUTPUT
 AS
 DECLARE @points INT
 SELECT @points = points FROM Customer WHERE username = @customername
@@ -351,33 +351,44 @@ IF @cash = NULL
 	SET @cash = 0.0 ;
 IF @credit = NULL
 	SET @credit = 0.0 ;
-
-UPDATE Orders 
-SET credit_amount = @credit, cash_amount = @cash
-WHERE order_no = @orderID
-
 DECLARE @remaining_points INT
 SELECT @remaining_points = O.total_amount - (O.cash_amount+O.credit_amount)
 FROM Orders O
 WHERE O.order_no = @orderid
-UPDATE Admin_Customer_Giftcard 
-SET remaining_points = remaining_points-@remaining_points
-WHERE customer_name = @customername
+if(@points >= @remaining_points)
+	BEGIN 
 
-UPDATE Customer 
-SET points = points-@remaining_points
-WHERE username = @customername
+	UPDATE Orders 
+	SET credit_amount = @credit, cash_amount = @cash
+	WHERE order_no = @orderID
 
+	UPDATE Admin_Customer_Giftcard 
+	SET remaining_points = remaining_points-@remaining_points
+	WHERE customer_name = @customername
+
+	UPDATE Customer 
+	SET points = points-@remaining_points
+	WHERE username = @customername
+	SET @success = '1'
+	END;
+else
+	SET @success = '0'
+GO
+CREATE PROC usersCreditCards
+@username varchar(20)
+AS
+SELECT cc_number
+FROM Customer_CreditCard
+WHERE customer_name LIKE @username
 GO
 
 CREATE PROC AddCreditCard
 @creditcardnumber varchar(20), @expirydate date , @cvv varchar(4), @customername varchar(20)
 AS
-	INSERT INTO Credit_Card
-	VALUES(@creditcardnumber, @expirydate,@cvv)
-
-	INSERT INTO Customer_CreditCard
-	VALUES(@customername,@creditcardnumber)
+INSERT INTO Credit_Card
+VALUES(@creditcardnumber, @expirydate,@cvv)
+INSERT INTO Customer_CreditCard
+VALUES(@customername,@creditcardnumber)
 GO
 
 CREATE PROC ChooseCreditCard
@@ -500,12 +511,18 @@ Go
 
 CREATE PROC EditProduct
 @vendorname varchar(20), @serialnumber int, @product_name varchar(20) ,@category varchar(20),
-@product_description text , @price decimal(10,2), @color varchar(20)
+@product_description text , @price decimal(10,2), @color varchar(20), @found BIT OUTPUT
 AS
-UPDATE Product
-SET product_name = @product_name, category = @category, product_description= @product_description
-	, price = @price, color = @color
-WHERE serial_no = @serialnumber AND @vendorname = vendor_username
+if(EXISTS(SELECT * from Product Where serial_no = @serialnumber))
+	BEGIN
+	UPDATE Product
+	SET product_name = @product_name, category = @category, product_description= @product_description
+		, price = @price, color = @color
+	WHERE serial_no = @serialnumber AND @vendorname = vendor_username
+	SET @found = '1'
+	END;
+else
+	SET @found = '0'
 GO
 
 CREATE PROC deleteProduct
@@ -607,7 +624,6 @@ AS
 GO
 
 -- The Admin procedures
---drop proc activateVendors
 CREATE PROC activateVendors
 @admin_username varchar(20),@vendor_username varchar(20),@res int output
 AS
@@ -827,7 +843,10 @@ GO
 
 
 
-
+INSERT INTO Users
+VALUES('nada.sharaf' ,'nada' ,'sharaf' ,'pass7' ,'nada.sharaf@guc.edu.eg')
+INSERT INTO Admins
+VALUES('nada.sharaf')
 
 
 

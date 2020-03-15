@@ -1,4 +1,6 @@
 ﻿--Create DataBase GUCommerce
+
+
 CREATE TABLE Users
 (
 username varchar(20) PRIMARY KEY,
