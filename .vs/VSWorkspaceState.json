@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\GUCommerce_UI",
+    "\\GUCommerce_UI\\GUCommerce_UI"
   ],
-  "SelectedNode": "\\insertion.sql",
+  "SelectedNode": "\\GUCommerce_UI\\GUCommerce_UI\\login.aspx",
   "PreviewInSolutionExplorer": false
 }
